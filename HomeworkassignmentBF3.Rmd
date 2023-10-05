@@ -1,0 +1,271 @@
+---
+title: "Homework Assignment week 3"
+author: "Vaibhav Rajesh Vesmaker"
+date: "09/29/2023"
+output: html_document
+---
+```{r}
+
+ library(fpp2)  
+
+```
+**Attempted to perform as many computations as I could with this particular dataset.**
+
+```{r}
+library(forecast)
+library(fma)
+#There is an inbuilt data collection methodology in R named by Boston which is further more explained below
+#####There were plenty of datasets which were scrutinized but boston dataset had all the requirements for these particular assignment and inbuilt datasets could be used so I opted for this dataset in which yearly,quarterly,monthly, graph was discussed with variety of plots
+
+data()  # to see all the datasets available in fpp2
+data(boston) # picking up the boston dataset
+```
+
+
+```{r}
+#boston_df<-as.data.frame(boston)
+#to save boston dataset in the working directory as a csv file(attempting Question1)
+#write.csv(boston_df,file="boston.csv")
+```
+
+
+```{r}
+# Describing the dataset and seeing various functions associated with it..
+# Monthly dollar volume of sales on Boston stock exchange and combined New York and American
+# stock exchange. January 1967 – November 1969.
+
+class(boston) # "mts" "ts"  (this shows the class of our data, it is "multiple time series" and "time series")
+
+```
+
+
+```{r}
+#Data collection methodology
+start(boston)   # this tells you that the data series is in a time series format
+```
+
+
+```{r}
+#This is the start of the time series
+end(boston)
+```
+
+
+```{r}
+#This is the end of the time series
+
+frequency(boston) # The cycle of this time series is 12 months in a year explaining data collection methodology
+```
+
+
+```{r}
+summary(boston)
+```
+```{r}
+dim(boston) # [1] 35  2   i.e 35 rows and 2 columns
+```
+
+
+```{r}
+colnames(boston)
+```
+
+
+```{r}
+plot(boston)
+```
+  
+```{r}
+ts_data <- ts(boston, frequency = 12)  # For monthly data
+monthly_summary <- aggregate(ts_data, FUN = sum)
+
+plot(boston)
+plot(monthly_summary)
+```
+```{r}
+#quarterly data
+ts_data <- ts(boston, frequency = 4)   # For quarterly data
+quarterly_summary <- aggregate(ts_data, FUN = sum,k=3)
+
+plot(boston,quarterly_summary)
+plot(quarterly_summary)
+
+```
+
+```{r}
+nrow(boston) #35
+
+```
+
+```{r}
+ncol(boston) #2
+```
+```{r}
+plot(aggregate((boston)))
+ #This will aggregate the cycles and display a year on year trend displaying it quarterly
+```
+
+
+```{r}
+#monthly time series explained here
+boxplot(boston~cycle(boston)) # Box plot across months
+```
+
+
+```{r}
+
+plot(boston[,"nyase"])
+
+
+```
+
+
+```{r}
+plot(boston[,"bse"])
+```
+
+
+```{r}
+# Autocorrelation represents the degree of similarity between a given time series and a lagged version of itself over successive time intervals.
+# Autocorrelation measures the relationship between a variable's current value and its past values.
+# An autocorrelation of +1 represents a perfect positive correlation, while an autocorrelation of negative 1 represents a perfect negative correlation.
+# Autocorrelation can also be referred to as lagged correlation or serial correlation, as it measures the relationship between a variable's current value and its past values.
+
+Acf(boston)
+```
+
+
+```{r}
+Acf(boston[,"nyase"])
+```
+
+
+```{r}
+# Notice how the coefficient is high at lag 1, 5,14,15. In terms of the month if I have to say then, high positive correlations for January and May, whereas February and March have negative correlations.
+# We will focus on the points that lie beyond the blue region as they signify strong statistical significance.
+
+Acf(boston[,"bse"])
+```
+```{r}
+# Again, we can get infer same things from this plot too and focus on the points that lie beyond the blue region as they signify strong statistical significance.
+
+
+# The autocorrelation plot for Monthly dollar volume of sales on Boston stock exchange and combined New York and American stock exchange. January 1967 – November 1969. that some values are not statistically significant and some of them are significant. This indicates that the values are not highly correlated, as we can see from the graph plot.
+
+# In our ACF plot, each bar (line) represents the size and direction of the correlation. Bars that extend across the blue line are statistically significant.
+
+# From the ACF, we can assess the randomness and stationarity of a time series. We can also determine whether trends and seasonal patterns are present.
+# From our output, we can see that there is randomness and trends are not present.
+
+# Now, let us find the autocorrelation values for both the columns from our ACF plot 
+Autocorrelation_bse <- acf(boston[,"bse"],plot=FALSE)
+Autocorrelation_bse
+```
+```{r}
+Autocorrelation_nyase <- acf(boston[,"nyase"],plot=FALSE)
+Autocorrelation_nyase
+```
+```{r}
+Autocorrelation_nyase<-acf(boston[,"nyase"],plot=FALSE)
+Autocorrelation_nyase
+```
+
+
+```{r}
+# I took the whole data because there are only limited rows and 2 columns in the dataset. 
+
+# Residuals
+df.ts_bse <-ts((boston[,"bse"]),frequency=12,start=c(1967,1))
+df.ts_bse
+```
+```{r}
+df.ts_nyase <-ts((boston[,"nyase"]))
+df.ts_nyase
+```
+
+
+
+```{r}
+plot.ts(df.ts_bse,main="Timeseries", col="blue")
+```
+```{r}
+plot.ts(df.ts_nyase,main="Timeseries", col="blue") #every five months
+```
+
+
+
+```{r}
+# We can “decompose” the time series — which in this case means separating out the 4 main components that make up the time series:
+# trend: the long-term trends in the data
+# seasonal: the repeated seasonal signal adder
+# random: the “left-over” components that aren’t expected from the seasonality or trend components.
+# observed: the real values in the data
+
+df_decompose_bse <- decompose(df.ts_bse, type = "additive")
+#df_decompose_nyase <- decompose(df.ts_nyase, type = "additive")
+
+# Notice how I chose additive instead of multiplicative since there is no exponential increase in the amplitudes over time.
+
+plot(df_decompose_bse)
+#plot(df_decompose_nyase)
+```
+
+
+
+
+```{r}
+# HoltWinters
+# Holt-Winters forecasting is a way to model and predict the behavior of a sequence of values over time—a time series.
+
+tmp1 <- HoltWinters(df.ts_bse)
+
+attributes(tmp1)
+```
+```{r}
+#tmp2 <- HoltWinters(df.ts_nyase)
+#attributes((tmp2))
+```
+
+
+```{r}
+plot(tmp1)
+#plot(tmp2)
+```
+
+
+```{r}
+# black line is the actual data and red line is the HoltWinters.. 
+# We can see that the data fits for sometime and then it deviates little bit from the actual data...
+
+
+tmp_f <- forecast(tmp1)
+attributes(tmp_f)
+```
+
+
+```{r}
+plot(tmp_f$residuals)
+```
+
+
+```{r}
+plot(hist(tmp_f$residuals))
+```
+
+
+```{r}
+Acf(tmp_f$residuals)
+```
+
+
+```{r}
+accuracy(tmp_f)
+```
+Question3_Data Collection Methodology (2 points). State how the data is collected, by whom, how often, etc. <br>
+ **Data collection in stock exchanges like NYSE (New York Stock Exchange) and BSE (Boston Stock Exchange) involves the meticulous recording of trading activity and market surveillance. The core of this data is the order book, which records buy and sell orders for securities, including price, quantity, and time. When orders match, trade data is recorded, capturing details of trade price, quantity, and execution time. Stock exchanges provide access to this data through data providers, facilitating real-time access to trading activity and historical data archives. Real-time data is available with minimal delay, often measured in milliseconds, while historical data is used for backtesting and analysis. Regulatory oversight requires exchanges to report trading activity to regulatory authorities, ensuring market integrity and adherence to securities laws. Market data fees are charged for access to this valuable information, and data is typically provided in standardized formats. The specifics of data collection may vary between exchanges, and each exchange operates under its own set of rules and regulations governing data collection and dissemination.**
+
+Question4_Why did this data set intrigued me? <br>
+ **For financial analysts, investors, and researchers alike, a monthly dataset of dollar volume sales on the Boston Stock Exchange holds substantial interest. By providing in-depth assessments of trade activity, market movements, and liquidity, it provides a window into the dynamics of financial markets. Analysts are able to identify seasonal patterns, assess market efficiency, and assess the effects of significant financial events by monitoring variations in trading volumes over time. Historical analysis offers a window into the development of the exchange and larger market, while traders can gain useful insights for creating and testing trading methods. The dataset also helps regulatory authorities ensure market integrity and provides a platform for machine learning algorithms. To put it simply, this dataset is an essential tool for comprehending and managing the intricacies.I chose this dataset because it was a built in dataset and i wanted to get acclaimatized with the resources I have in R itself although there were many datasets online I decided to go with this because I wanted something to do with Stock Markets and when I saw the data I was sure to work on it. Additionally I have tried to do as many computations as I could by adding the concepts from Professor's work in both the weeks and implement most scenarios**
+
+ 
+ 
